@@ -1,0 +1,4 @@
+I am trying to build small reports for my clients relative to generated solar power predictions from their solar panels.
+Take for instance that, for my client #client# the solar power generated will be #solar_power_cat# (#solar_power_num# kilo Watts) due to #temp_cat# temperature (#temp_num# degrees celsius) and #solar_irradiance_cat# solar irradiance (#solar_irradiance_num# Watts per meter square).
+He can use his $use_devices$, his $uncertain_devices$ might be exceed the generated power, and his $nouse_devices$ will exceed the generated power. 
+Can you build me a small report for my client with this information?
