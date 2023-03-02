@@ -17,13 +17,23 @@ import openai
 def gen_question(format_text):
     raw_question = ""
     with open("./GenerationCorpus/resources/question_template.txt", "r") as f:
-        raw_question = f.read().split("#")
+        raw_question = f.read()
 
-    for i in range(1, len(raw_question), 2):
-        raw_question[i] = format_text[raw_question[i]]
+    section_divided = raw_question.split("$")
 
-    return "".join(raw_question)
+    if format_text["use_devices"] == "":
+        section_divided[1] = ""
+    if format_text["uncertain_devices"] == "":
+        section_divided[2] = ""
+    if format_text["nouse_devices"] == "":
+        section_divided[3] = ""
 
+    token_divided = "".join(section_divided).split("#")
+
+    for i in range(1, len(token_divided), 2):
+        token_divided[i] = format_text[token_divided[i]]
+
+    return "".join(token_divided)
 
 def gen_completion(question):
     openai.api_key = "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"
@@ -40,10 +50,11 @@ format_text = {
             "solar_power_num": "1",
             "explanation": "moderate ambient temperature (20 degrees celsius)",
             "use_devices": "washing machine",
-            "uncertain_devices": "dishwasher and air conditioner",
-            "nouse_devices": "none"
+            "uncertain_devices": "dishwasher and water heater",
+            "nouse_devices": "air conditioner"
         }
 
 question = gen_question(format_text)
+print(question)
 completion = gen_completion(question)
 print(completion)
