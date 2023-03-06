@@ -1,0 +1,75 @@
+import pandas as pd
+import seaborn as sns
+from sklearn.neural_network import MLPRegressor
+import itertools
+from sklearn.model_selection import cross_validate, RandomizedSearchCV, train_test_split
+from sklearn.metrics import balanced_accuracy_score, confusion_matrix
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from itertools import chain
+from sklearn.metrics import r2_score
+
+df = pd.read_csv("datasetFinal.csv")
+
+Y = df['generated_power']
+X = df.drop(columns=['generated_power'])
+
+
+
+
+X_train, X_test, y_train, y_test = train_test_split(X,Y,test_size=0.2)
+
+scaler = StandardScaler()
+scaler.fit(X_train)
+
+X_train = scaler.transform(X_train)
+X_test = scaler.transform(X_test)
+
+
+
+# from: https://panjeh.medium.com/scikit-learn-hyperparameter-optimization-for-mlpclassifier-4d670413042b
+# from: https://neptune.ai/blog/hyperparameter-tuning-in-python-complete-guide
+
+# List of numbers to choose from
+n = len(X.columns)-1
+numbers = [n, 2*n, n//2, n//4]
+
+# Get the combinations of length 2, 3 and 4
+combinations_2 = list(itertools.combinations(numbers, 2))
+combinations_3 = list(itertools.combinations(numbers, 3))
+combinations_4 = list(itertools.combinations(numbers, 4))
+
+
+# Concatenate the lists of combinations
+combinations = list(chain(combinations_2, combinations_3, combinations_4))
+
+mlp_gs = MLPRegressor(max_iter = 100000)
+parameter_space = {
+    'hidden_layer_sizes': combinations,
+    'activation': ['tanh', 'relu', 'logistic'],
+    'solver': ['sgd', 'adam'],
+    'alpha': [0.001, 0.01, 0.1, 0.5, 0.9],
+    'learning_rate': ['constant','adaptive']
+}
+# grid search
+clf = RandomizedSearchCV(mlp_gs, parameter_space, n_jobs = 9, cv = 3, random_state = 24)
+clf.fit(X_train, y_train) # X is train samples and y is the corresponding labels
+
+y_true, y_pred = y_test, clf.predict(X_test)
+r2 = r2_score(y_true, y_pred)
+#from: https://www.projectpro.io/recipes/find-optimal-parameters-using-randomizedsearchcv-for-regression
+
+
+
+
+
+# Open the file for writing
+with open('output.txt', 'w') as f:
+    print(" Results from Random Search " )
+    print("\n The best estimator across ALL searched params:\n", clf.best_estimator_, file=f)
+    print("\n The best score across ALL searched params:\n", clf.best_score_, file=f)
+    print("\n The best parameters across ALL searched params:\n", clf.best_params_, file=f)
+    print("\n R2 Score: \n",r2)
+    
+  
+  

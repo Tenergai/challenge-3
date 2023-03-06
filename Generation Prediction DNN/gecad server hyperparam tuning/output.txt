@@ -1,0 +1,9 @@
+
+ The best estimator across ALL searched params:
+ MLPRegressor(alpha=0.5, hidden_layer_sizes=(10, 20, 5), max_iter=100000)
+
+ The best score across ALL searched params:
+ 0.8589006743098612
+
+ The best parameters across ALL searched params:
+ {'solver': 'adam', 'learning_rate': 'constant', 'hidden_layer_sizes': (10, 20, 5), 'alpha': 0.5, 'activation': 'relu'}
