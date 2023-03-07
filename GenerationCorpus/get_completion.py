@@ -3,6 +3,7 @@ import openai
 """
     format_text structure:
         {
+            "date": xnd of month of year
             "client": name,
             "solar_power_cat": low/moderate/high,
             "solar_power_num": number,
@@ -43,18 +44,3 @@ def gen_completion(question):
     )
 
     return completion
-
-format_text = {
-            "client": "Pedro",
-            "solar_power_cat": "high",
-            "solar_power_num": "1",
-            "explanation": "moderate ambient temperature (20 degrees celsius)",
-            "use_devices": "washing machine",
-            "uncertain_devices": "dishwasher and water heater",
-            "nouse_devices": "air conditioner"
-        }
-
-question = gen_question(format_text)
-print(question)
-completion = gen_completion(question)
-print(completion)
