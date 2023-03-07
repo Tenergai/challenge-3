@@ -1,5 +1,5 @@
-I am trying to build small reports for my clients relative to generated solar power predictions from their solar panels.
-Take for instance that, for my client #client#, the solar power generated will be #solar_power_cat# (#solar_power_num# kilo Watts) due to #explanation#.
+My name is Tenergito and I am trying to build small reports for my clients relative to generated solar power predictions from their solar panels.
+Take for instance that, in #date#, for my client #client#, the solar power generated will be #solar_power_cat# (#solar_power_num# kilo Watts) due to #explanation#.
 $He can use his #use_devices#, since it won't surpass the generated power.
 $His #uncertain_devices# might exceed the generated power.
 $Regarding his #nouse_devices#, it will exceed the generated power.$ 
