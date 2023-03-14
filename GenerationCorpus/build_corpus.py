@@ -27,6 +27,8 @@ category = {
 
 devices = ["air conditioner", "washing machine", "dishwasher", "water heater", "heater"]
 
+features = "TemperatureC,DewpointC,PressurehPa,WindDirectionDegrees,WindSpeedKMH,WindSpeedGustKMH,Humidity,HourlyPrecipMM,dailyrainMM,SolarRadiationWatts_m2"
+
 def gen_date():
     items = list(months.items())
     selected_month_day  = random.choice(items)
@@ -62,6 +64,19 @@ def select_devices(ny, ns, no):
                     print("No more to be poped.")
     
     return accepted_devices
+
+def gen_explanation(solar_power_cat):
+    if solar_power_cat == "very low":
+        pass
+    elif solar_power_cat == "low":
+        pass
+    elif solar_power_cat == "medium":
+        pass
+    elif solar_power_cat == "high":
+        pass
+    elif solar_power_cat == "very high":
+        pass
+
 
 def gen_text_formats():
     date = gen_date()
@@ -125,7 +140,7 @@ def gen_text_formats():
         "date": date,
         "client": name,
         "solar_power_cat": solar_power_cat,
-        "solar_power_num": solar_power_num,
+        "solar_power_num": str(solar_power_num),
         "explanation": "",
         "use_devices": select_devices_text["accept"],
         "uncertain_devices": select_devices_text["uncertain"],
@@ -164,4 +179,8 @@ def main():
 
     save_file(loc + "example1.txt", body)
 
-print(gen_text_formats())
+format_text = gen_text_formats()
+question = gen_question(format_text=format_text)
+
+print(format_text)
+print(question)
