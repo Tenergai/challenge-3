@@ -27,8 +27,6 @@ category = {
 
 devices = ["air conditioner", "washing machine", "dishwasher", "water heater", "heater"]
 
-features = "TemperatureC,DewpointC,PressurehPa,WindDirectionDegrees,WindSpeedKMH,WindSpeedGustKMH,Humidity,HourlyPrecipMM,dailyrainMM,SolarRadiationWatts_m2"
-
 def gen_date():
     items = list(months.items())
     selected_month_day  = random.choice(items)
@@ -46,7 +44,9 @@ def gen_date():
     else: 
         suffix = "th"
 
-    return selected_month + ' ' + str(selected_day) + suffix + ' ' + str(selected_year)
+    hour = random.randint(6, 23)
+
+    return selected_month + ' ' + str(selected_day) + suffix + ' ' + str(selected_year) + ', ' + str(hour) + "o\'clock", hour
 
 def select_devices(ny, ns, no):
     # maximum values accepted
@@ -67,19 +67,47 @@ def select_devices(ny, ns, no):
 
 def gen_explanation(solar_power_cat):
     if solar_power_cat == "very low":
-        pass
+        possible_explations = [
+            ("solar radiation", "significant negative contribution"),
+            ("hourly precipitation", "significant negative contribution")
+        ]
     elif solar_power_cat == "low":
-        pass
+        possible_explations = [
+            ("solar radiation", "negative contribution"),
+            ("hourly precipitation", "negative contribution")
+        ]
     elif solar_power_cat == "medium":
-        pass
+        possible_explations = [
+            ("hourly precipitation", "negative contribution"),
+            ("temperature", "negative contribution")
+        ]
     elif solar_power_cat == "high":
-        pass
+        possible_explations = [
+            ("solar radiation", "positive contribution"),
+            ("temperature", "positive contribution"),
+            ("dewpoint", "positive contribution")
+        ]
     elif solar_power_cat == "very high":
-        pass
+        possible_explations = [
+            ("solar radiation", "significant positive contribution"),
+            ("temperature", "positive contribution")
+        ]
+    
+    explanation_tokens = [random.choice(possible_explations)]
+    possible_explations.pop(possible_explations.index(explanation_tokens[0]))
+    if random.randint(0,1) == 1:
+        explanation_tokens.append(random.choice(possible_explations))
+
+    if len(explanation_tokens) == 2:
+        explanation = f" due to {explanation_tokens[0][0]} having a {explanation_tokens[0][1]} and {explanation_tokens[1][0]} having a {explanation_tokens[1][1]}"
+    else:
+        explanation = f" due to {explanation_tokens[0][0]} having a {explanation_tokens[0][1]}"
+
+    return explanation
 
 
 def gen_text_formats():
-    date = gen_date()
+    date, hour = gen_date()
     name = random.choice(["Pedro", "Luís", "Franciso", "Constantino", "Rafael", "Letícia"])
     
     coef = random.choice(list(category.values()))
@@ -91,7 +119,18 @@ def gen_text_formats():
         "high": list(map(func_rescale, [i for i in range(61, 80+1)])),
         "very high": list(map(func_rescale, [i for i in range(81, 100+1)]))
     }
-    solar_power_cat, solar_power_nums = random.choice(list(solar_power.items()))
+
+    if hour >= 6 and hour < 10:
+        solar_power_cat, solar_power_nums = random.choice(list(solar_power.items())[0:3])
+    elif hour >= 10 and hour < 17:
+        solar_power_cat, solar_power_nums = random.choice(list(solar_power.items())[2:5])
+    elif hour >= 17 and hour < 19:
+        solar_power_cat, solar_power_nums = random.choice(list(solar_power.items())[1:4])
+    elif hour >= 19 and hour < 20:
+        solar_power_cat, solar_power_nums = random.choice(list(solar_power.items())[0:1])
+    else:
+        solar_power_cat, solar_power_nums = list(solar_power.items())[0]
+
     solar_power_num = random.choice(solar_power_nums)
     
     selected_devices = {}
@@ -136,12 +175,14 @@ def gen_text_formats():
             else:
                 select_devices_text[cat] += d + ', '
 
+    explanation = gen_explanation(solar_power_cat)
+
     format_text = {
         "date": date,
         "client": name,
         "solar_power_cat": solar_power_cat,
         "solar_power_num": str(solar_power_num),
-        "explanation": "",
+        "explanation": explanation,
         "use_devices": select_devices_text["accept"],
         "uncertain_devices": select_devices_text["uncertain"],
         "nouse_devices": select_devices_text["unaccept"]
@@ -178,6 +219,7 @@ def main():
     print(body)
 
     save_file(loc + "example1.txt", body)
+
 
 format_text = gen_text_formats()
 question = gen_question(format_text=format_text)
