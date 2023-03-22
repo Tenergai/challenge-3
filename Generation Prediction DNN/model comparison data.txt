@@ -1,0 +1,59 @@
+##### DNN
+
+history=model.fit(
+    X_train, 
+    y_train ,
+    batch_size = 5, 
+    epochs = 50,     
+    verbose=1,
+    validation_split = 0.33)
+
+Standard Scaler:
+MSE: 0.12354516237974167
+MAE: 0.18502894043922424
+R2: 0.8756476821525528
+
+
+MinMax Scaler:
+MSE:  0.010460209101438522
+MAE: 0.05771798640489578
+R2: 0.8416602150039185
+
+
+# Fitting the ANN to the Training set
+#  batch_size = 15, 
+#    epochs = 5,
+history=model.fit(
+    X_train, 
+    y_train ,
+    batch_size = 20, 
+    epochs = 50,     
+    verbose=1,
+    validation_split = 0.33)
+
+Standard Scaler:
+MSE:  0.12587647140026093
+MAE: 0.18737663328647614
+R2: 0.8733011849096581
+
+MinMax Scaler:
+MSE:  0.009497251361608505
+MAE: 0.0535694919526577
+R2: 0.8562368773164993
+
+
+# Fitting the ANN to the Training set
+#  batch_size = 15, 
+#    epochs = 5,
+history=model.fit(
+    X_train, 
+    y_train ,
+    batch_size = 15, 
+    epochs = 100,     
+    verbose=1,
+    validation_split = 0.33)
+
+Standard Scaler:
+MSE:  0.12295647710561752
+MAE: 0.17541764676570892
+R2: 0.8762401584492724
