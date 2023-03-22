@@ -2,6 +2,9 @@ from get_completion import gen_question, gen_completion
 
 import random
 
+import pandas as pd
+import numpy as np
+
 months = {
     "January": [i for i in range(1,31+1)],
     "February": [i for i in range(1,28+1)],
@@ -17,7 +20,7 @@ months = {
     "December": [i for i in range(1,31+1)]
 }
 
-years = [i for i in range(2022, 2023+1)]
+years = [i for i in range(2023, 2024+1)]
 
 category = {
     "small": 35,
@@ -44,7 +47,7 @@ def gen_date():
     else: 
         suffix = "th"
 
-    hour = random.randint(6, 23)
+    hour = random.randint(6, 20)
 
     return selected_month + ' ' + str(selected_day) + suffix + ' ' + str(selected_year) + ', ' + str(hour) + "o\'clock", hour
 
@@ -68,18 +71,17 @@ def select_devices(ny, ns, no):
 def gen_explanation(solar_power_cat):
     if solar_power_cat == "very low":
         possible_explations = [
-            ("solar radiation", "significant negative contribution"),
-            ("hourly precipitation", "significant negative contribution")
+            ("solar radiation", "significant negative impact"),
         ]
     elif solar_power_cat == "low":
         possible_explations = [
-            ("solar radiation", "negative contribution"),
-            ("hourly precipitation", "negative contribution")
+            ("solar radiation", "negative impact"),
+            ("hourly precipitation", "significant negative impact")
         ]
     elif solar_power_cat == "medium":
         possible_explations = [
-            ("hourly precipitation", "negative contribution"),
-            ("temperature", "negative contribution")
+            ("hourly precipitation", "negative impact"),
+            ("temperature", "negative impact")
         ]
     elif solar_power_cat == "high":
         possible_explations = [
@@ -95,15 +97,15 @@ def gen_explanation(solar_power_cat):
     
     explanation_tokens = [random.choice(possible_explations)]
     possible_explations.pop(possible_explations.index(explanation_tokens[0]))
-    if random.randint(0,1) == 1:
+    if random.randint(0,1) == 1 and len(possible_explations) != 0:
         explanation_tokens.append(random.choice(possible_explations))
 
     if len(explanation_tokens) == 2:
-        explanation = f" due to {explanation_tokens[0][0]} having a {explanation_tokens[0][1]} and {explanation_tokens[1][0]} having a {explanation_tokens[1][1]}"
+        explanation = f" due to {explanation_tokens[0][0]} predicted value having a {explanation_tokens[0][1]} and {explanation_tokens[1][0]} predicted value having a {explanation_tokens[1][1]}"
     else:
-        explanation = f" due to {explanation_tokens[0][0]} having a {explanation_tokens[0][1]}"
+        explanation = f" due to {explanation_tokens[0][0]} predicted value having a {explanation_tokens[0][1]}"
 
-    return explanation
+    return explanation, explanation_tokens
 
 
 def gen_text_formats():
@@ -121,15 +123,13 @@ def gen_text_formats():
     }
 
     if hour >= 6 and hour < 10:
-        solar_power_cat, solar_power_nums = random.choice(list(solar_power.items())[0:3])
+        solar_power_cat, solar_power_nums = random.choice(list(solar_power.items())[0:4])
     elif hour >= 10 and hour < 17:
         solar_power_cat, solar_power_nums = random.choice(list(solar_power.items())[2:5])
     elif hour >= 17 and hour < 19:
         solar_power_cat, solar_power_nums = random.choice(list(solar_power.items())[1:4])
-    elif hour >= 19 and hour < 20:
+    elif hour >= 19 and hour <= 20:
         solar_power_cat, solar_power_nums = random.choice(list(solar_power.items())[0:1])
-    else:
-        solar_power_cat, solar_power_nums = list(solar_power.items())[0]
 
     solar_power_num = random.choice(solar_power_nums)
     
@@ -175,7 +175,7 @@ def gen_text_formats():
             else:
                 select_devices_text[cat] += d + ', '
 
-    explanation = gen_explanation(solar_power_cat)
+    explanation, explanation_tokens = gen_explanation(solar_power_cat)
 
     format_text = {
         "date": date,
@@ -188,7 +188,7 @@ def gen_text_formats():
         "nouse_devices": select_devices_text["unaccept"]
     }
 
-    return format_text
+    return format_text, selected_devices, explanation_tokens
 
 def save_file(filename, body):
     with open(filename, "w") as file:
@@ -205,24 +205,82 @@ def del_sure(body):
 
     return body
 
+def init_meta_data():
+    df = pd.DataFrame(
+        columns=[
+            "date", 
+            "client", 
+            "solar_power_cat", 
+            "solar_power_num",
+            "explanation",
+            "use_devices",
+            "uncertain_devices",
+            "nouse_devices",
+            "filename"
+        ]
+    )
+    df.to_csv("./GenerationCorpus/metadata.csv")
+
+def gen_reports_batch(batch, batch_size, df):
+    print(f"Progress on batch {batch+1}: ", end="")
+    pipes = "|||"
+    for b in range(batch_size):
+        format_text, raw_devices, explanation_tokens = gen_text_formats()
+        use_devices = "#" + "&".join(raw_devices["accept"])
+        uncertain_devices = "#" + "&".join(raw_devices["uncertain"])
+        nouse_devices = "#" + "&".join(raw_devices["unaccept"])
+        exp_tokens = "#" + "&".join(map(lambda x: str(x), explanation_tokens))
+
+        question = gen_question(format_text)
+        
+        raw_completion = gen_completion(question)
+        body = raw_completion["choices"][0]["message"]["content"]
+        completion = del_sure(body)
+
+        loc = "./GenerationCorpus/corpus/"
+        filename = f"report_{batch+1}_{b+1}" + ".txt"
+        save_file(loc + filename, completion)
+        s_add = pd.DataFrame(np.array([[
+            format_text["date"],
+            format_text["client"],
+            format_text["solar_power_cat"],
+            format_text["solar_power_num"],
+            exp_tokens,
+            use_devices,
+            uncertain_devices,
+            nouse_devices,
+            filename
+        ]]), columns=[
+            "date", 
+            "client", 
+            "solar_power_cat", 
+            "solar_power_num",
+            "explanation",
+            "use_devices",
+            "uncertain_devices",
+            "nouse_devices",
+            "filename"
+        ])
+
+        df = pd.concat([df, s_add], ignore_index=True)
+        df.to_csv("./GenerationCorpus/metadata.csv")
+
+        print(f"{pipes}", end="")
+    
+    print()
+
 def main():
-    format_text = gen_text_formats()
-    question = gen_question(format_text)
-    print(question)
-    completion = gen_completion(question)
+    n_batches = 100
+    batch_size = 16
 
-    loc = "./GenerationCorpus/corpus/"
-    body = completion["choices"][0]["message"]["content"]
-    print(body)
+    init_meta_data()
+    df = pd.read_csv("./GenerationCorpus/metadata.csv")
+    for batch in range(n_batches):
+        proceed = input(f"Do you want to proceed to the next batch (number {batch+1})? (y/(any key)): ")
+        if proceed == "y":
+            gen_reports_batch(batch, batch_size, df)
+        else:
+            break
 
-    body = del_sure(body)
-    print(body)
-
-    save_file(loc + "example1.txt", body)
-
-
-format_text = gen_text_formats()
-question = gen_question(format_text=format_text)
-
-print(format_text)
-print(question)
+if __name__ == "__main__":
+    main()
