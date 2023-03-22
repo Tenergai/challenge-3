@@ -3,9 +3,9 @@ import openai
 """
     format_text structure:
         {
-            "date": xnd of month of year
+            "date": xnd of month of year, hour 
             "client": name,
-            "solar_power_cat": low/moderate/high,
+            "solar_power_cat": verylow/low/moderate/high/veryhigh,
             "solar_power_num": number,
             "explanation": text,
             "use_devices": text,
