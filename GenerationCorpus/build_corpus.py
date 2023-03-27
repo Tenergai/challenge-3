@@ -195,12 +195,12 @@ def save_file(filename, body):
         file.write(body)
 
 def del_sure(body):
-    if body[2:6] == "Sure":
-        body = body.replace(body[0:2], "", 1)
+    if body[:].find("\n") == 0:
+            body = body.replace(body[0:2], "", 1)
+
+    if body[0:4] == "Sure":
         id_final_phrase = body[:].find("\n")
         body = body.replace(body[0:id_final_phrase], "", 1)
-        body = body.replace(body[0:2], "", 1)
-    else:
         body = body.replace(body[0:2], "", 1)
 
     return body
@@ -221,10 +221,10 @@ def init_meta_data():
     )
     df.to_csv("./GenerationCorpus/metadata.csv")
 
-def gen_reports_batch(batch, batch_size, df):
+def gen_reports_batch(batch, start_point, batch_size, df):
     print(f"Progress on batch {batch+1}: ", end="")
     pipes = "|||"
-    for b in range(batch_size):
+    for b in range(start_point-1, batch_size):
         format_text, raw_devices, explanation_tokens = gen_text_formats()
         use_devices = "#" + "&".join(raw_devices["accept"])
         uncertain_devices = "#" + "&".join(raw_devices["uncertain"])
@@ -262,6 +262,24 @@ def gen_reports_batch(batch, batch_size, df):
             "filename"
         ])
 
+        if "Unnamed: 0" in list(df.columns):
+            del df["Unnamed: 0"]
+
+        if "Unnamed: 0.1" in list(df.columns):
+            del df["Unnamed: 0.1"]
+
+        if "Unnamed: 0.2" in list(df.columns):
+            del df["Unnamed: 0.2"]
+
+        if "Unnamed: 0.3" in list(df.columns):
+            del df["Unnamed: 0.3"]
+
+        if "Unnamed: 0.4" in list(df.columns):
+            del df["Unnamed: 0.4"]
+
+        if "Unnamed: 0.5" in list(df.columns):
+            del df["Unnamed: 0.5"]
+
         df = pd.concat([df, s_add], ignore_index=True)
         df.to_csv("./GenerationCorpus/metadata.csv")
 
@@ -272,15 +290,21 @@ def gen_reports_batch(batch, batch_size, df):
 def main():
     n_batches = 100
     batch_size = 16
+    start_batch = int(input("Batch you want to start: "))
+    start_point = int(input("Point in the batch to start: "))
+    if start_batch == 1 and start_point == 1:
+        init_meta_data()
 
-    init_meta_data()
     df = pd.read_csv("./GenerationCorpus/metadata.csv")
-    for batch in range(n_batches):
+    for batch in range(start_batch-1, n_batches):
         proceed = input(f"Do you want to proceed to the next batch (number {batch+1})? (y/(any key)): ")
         if proceed == "y":
-            gen_reports_batch(batch, batch_size, df)
+            gen_reports_batch(batch, start_point, batch_size, df)
         else:
             break
+
+        start_point = 1
+
 
 if __name__ == "__main__":
     main()
