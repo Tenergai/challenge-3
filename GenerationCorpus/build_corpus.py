@@ -265,21 +265,6 @@ def gen_reports_batch(batch, start_point, batch_size, df):
         if "Unnamed: 0" in list(df.columns):
             del df["Unnamed: 0"]
 
-        if "Unnamed: 0.1" in list(df.columns):
-            del df["Unnamed: 0.1"]
-
-        if "Unnamed: 0.2" in list(df.columns):
-            del df["Unnamed: 0.2"]
-
-        if "Unnamed: 0.3" in list(df.columns):
-            del df["Unnamed: 0.3"]
-
-        if "Unnamed: 0.4" in list(df.columns):
-            del df["Unnamed: 0.4"]
-
-        if "Unnamed: 0.5" in list(df.columns):
-            del df["Unnamed: 0.5"]
-
         df = pd.concat([df, s_add], ignore_index=True)
         df.to_csv("./GenerationCorpus/metadata.csv")
 
@@ -295,16 +280,15 @@ def main():
     if start_batch == 1 and start_point == 1:
         init_meta_data()
 
-    df = pd.read_csv("./GenerationCorpus/metadata.csv")
     for batch in range(start_batch-1, n_batches):
         proceed = input(f"Do you want to proceed to the next batch (number {batch+1})? (y/(any key)): ")
         if proceed == "y":
+            df = pd.read_csv("./GenerationCorpus/metadata.csv")
             gen_reports_batch(batch, start_point, batch_size, df)
         else:
             break
 
         start_point = 1
-
 
 if __name__ == "__main__":
     main()
