@@ -4,15 +4,8 @@ import shap
 import joblib
 import numpy as np
 import pandas as pd
-import pickle 
 import tensorflow as tf
 import matplotlib.pyplot as plt
-from keras.models import load_model
-
-# from tensorflow import keras
-
-# print(keras.__version__)
-# print(tf.__version__)
 
 def getContributions(X_test):
     df_x=getDataframe()
@@ -36,7 +29,7 @@ def getContributions(X_test):
     return shap_values,shap_values_mean
 
 def getDataframe():
-    df = pd.read_csv("../PreProcessamentoDados/cleanedData.csv")
+    df = pd.read_csv("./PreProcessamentoDados/cleanedData.csv")
     df[['Hour','Minute','Second']] = df.DateTime.str.split(":",expand=True)
 
     dtypes_dict = {'Hour': float, 'Minute': float}
@@ -54,27 +47,11 @@ def getModel():
     filename = 'Generation Prediction DNN/DNN_finalized_model'
     # load the model from disk
     loaded_model = tf.keras.models.load_model(filename)
-    print('1', type(loaded_model))
-    loaded_model_MLPR =load_model(filename)
-    # loaded_model_MLPR = pickle.load(open(filename, 'rb'))
-    print('2', type(loaded_model_MLPR))
-    model = tf.saved_model.load(filename)
-    print('3', type(model))
-
-    # Extract the Keras model from the SavedModel object
-    # model_func = loaded_model.signatures["serving_default"]
-
-    # model = tf.keras.models.clone_model(model_func)
-    
-
-    # Print the type of the loaded model
-    # print(type(model))
-    # print(type(loaded_model_MLPR))
     return loaded_model
 
 def execute(X_test):
     #predict ao modelo
-    model=getModel(X_test)
+    model=getModel()
     predictions = model.predict(X_test)
     all_contr, mean_contr=getContributions(X_test)
     return predictions, all_contr, mean_contr
@@ -89,6 +66,5 @@ x_test=[[   0.        ,   15.        ,   11.        ,    8.        ,
        [   0.        ,   45.        ,   11.        ,    8.        ,
         1021.        ,  127.66666667,    3.        ,   12.33333333,
           82.33333333,    0.        ,    0.        ,    0.        ]]
-# a, b, c=execute(x_test)
-m=getModel()
-print(m, type(m))
+a, b, c=execute(x_test)
+print(a,b,c)
