@@ -23,9 +23,9 @@ months = {
 years = [i for i in range(2023, 2024+1)]
 
 category = {
-    "small": 35,
-    "medium": 30,
-    "big": 25
+    "small": 25,
+    "medium": 15,
+    "big": 7
 }
 
 devices = ["air conditioner", "washing machine", "dishwasher", "water heater", "heater"]
@@ -110,7 +110,8 @@ def gen_explanation(solar_power_cat):
 
 def gen_text_formats():
     date, hour = gen_date()
-    name = random.choice(["Pedro", "Luís", "Franciso", "Constantino", "Rafael", "Letícia"])
+    # name = random.choice(["Pedro", "Luís", "Franciso", "Constantino", "Rafael", "Letícia"])
+    name = random.choice(["Tomás", "Ricardo", "Ana", "Carlos", "Ema", "Diana"])
     
     coef = random.choice(list(category.values()))
     func_rescale = lambda x: round(x/coef, 3)
