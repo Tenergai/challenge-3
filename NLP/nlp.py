@@ -1,86 +1,61 @@
-# Import necessary libraries
-# export XLA_FLAGS=--xla_gpu_cuda_data_dir=/home/pardalito/anaconda3/envs/meia/lib
-import numpy as np
 import tensorflow as tf
-import os
-# Define the training data
-with open('demo.txt', 'r') as file:
-    text = file.read()
+import numpy as np
 
-# Define the vocabulary and the mapping of characters to integers
-vocab = sorted(set(text))
-char_to_idx = {char:idx for idx, char in enumerate(vocab)}
+# load the text corpus
+with open('./NLP/demo.txt', 'r') as file:
+    corpus = file.read()
 
-# Convert the text to numbers
-text_as_int = np.array([char_to_idx[char] for char in text])
+# tokenize the text corpus into words
+tokenizer = tf.keras.preprocessing.text.Tokenizer()
+tokenizer.fit_on_texts([corpus])
+word_to_index = tokenizer.word_index
+index_to_word = dict((i, w) for w, i in word_to_index.items())
 
-# Define the maximum sequence length and the batch size
-seq_length = 50
-batch_size = 64
+# create sequences of fixed length with a sliding window
+seq_length = 20
+step_size = 1
+sequences = []
+next_words = []
+words = corpus.split()
+vocab_set = set(word_to_index.keys())
+for i in range(0, len(words) - seq_length - 1, step_size):
+    sequence = ' '.join(words[i:i+seq_length])
+    next_word = words[i+seq_length]
+    if next_word in vocab_set:
+        sequences.append(sequence)
+        next_words.append(next_word)
 
-# Create training examples and targets by sliding a window of size seq_length
-examples_per_epoch = len(text) // (seq_length + 1)
-char_dataset = tf.data.Dataset.from_tensor_slices(text_as_int)
-sequences = char_dataset.batch(seq_length + 1, drop_remainder=True)
+# convert sequences to numerical data
+X = tokenizer.texts_to_sequences(sequences)
+X = tf.keras.preprocessing.sequence.pad_sequences(X, maxlen=seq_length)
+categorical = tokenizer.texts_to_sequences(next_words)
+categorical_flat = np.array(categorical).flatten()
+y = tf.keras.utils.to_categorical(categorical_flat, num_classes=len(word_to_index))
 
-# Define the input and output examples
-def create_input_target(sequence):
-    input_text = sequence[:-1]
-    target_text = sequence[1:]
-    return input_text, target_text
+# define the LSTM model
+model = tf.keras.models.Sequential()
+model.add(tf.keras.layers.Embedding(input_dim=len(word_to_index) + 1, output_dim=128, input_length=seq_length))
+model.add(tf.keras.layers.LSTM(units=128, return_sequences=True))
+model.add(tf.keras.layers.Dropout(0.2))
+model.add(tf.keras.layers.LSTM(units=128))
+model.add(tf.keras.layers.Dropout(0.2))
+model.add(tf.keras.layers.Dense(units=len(word_to_index), activation='softmax'))
 
-# Map each sequence to an input and target example
-dataset = sequences.map(create_input_target)
+# compile the model
+model.compile(loss='categorical_crossentropy', optimizer='adam')
 
-# Create the RNN model with LSTM units
-num_chars = len(vocab)
-rnn_units = 1024
-embedding_dim = 256
-model = tf.keras.Sequential([
-    tf.keras.layers.Embedding(num_chars, embedding_dim, batch_input_shape=[batch_size, None]),
-    tf.keras.layers.LSTM(rnn_units, return_sequences=True, stateful=True, recurrent_initializer='glorot_uniform'),
-    tf.keras.layers.Dense(num_chars)
-])
+# train the model
+model.fit(X, y, epochs=50, batch_size=128)
 
-# Define the loss and optimizer functions
-def loss(labels, logits):
-    return tf.keras.losses.sparse_categorical_crossentropy(labels, logits, from_logits=True)
+# generate text
+seed_text = 'The quick brown fox'
+generated_text = seed_text.lower()
+for i in range(100):
+    x = tokenizer.texts_to_sequences([generated_text])[0]
+    x = tf.keras.preprocessing.sequence.pad_sequences([x], maxlen=seq_length)
+    prediction = model.predict(x, verbose=0)[0]
+    index = np.argmax(prediction)
+    word = index_to_word[index]
+    generated_text += ' ' + word
 
-model.compile(optimizer='adam', loss=loss)
-
-# Define the checkpoint callback to save the model during training
-checkpoint_dir = './training_checkpoints'
-checkpoint_prefix = os.path.join(checkpoint_dir, "ckpt_{epoch}")
-checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=checkpoint_prefix, save_weights_only=True)
-
-# Train the model
-epochs = 10
-history = model.fit(dataset.batch(batch_size), epochs=epochs, callbacks=[checkpoint_callback])
-
-# Use the trained model to generate new text
-model.load_weights(tf.train.latest_checkpoint(checkpoint_dir))
-model.build(tf.TensorShape([1, None]))
-
-# Define the temperature parameter for the softmax function
-def generate_text(model, start_string):
-  num_generate = 1000
-  input_eval = [char_to_idx[s] for s in start_string]
-  input_eval = tf.expand_dims(input_eval, 0)
-
-  text_generated = []
-
-  temperature = 1.0
-
-  model.reset_states()
-  for i in range(num_generate):
-      predictions = model(input_eval)
-      predictions = tf.squeeze(predictions, 0)
-
-      predictions = predictions / temperature
-      predicted_id = tf.random.categorical(predictions, num_samples=1)[-1,0].numpy()
-
-      input_eval = tf.expand_dims([predicted_id], 0)
-
-      text_generated.append(vocab[predicted_id])
-
-  return (start_string + ''.join(text_generated))
+print(generated_text)
