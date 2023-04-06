@@ -275,7 +275,7 @@ def gen_reports_batch(batch, start_point, batch_size, df):
 
 def main():
     n_batches = 100
-    batch_size = 16
+    batch_size = 64
     start_batch = int(input("Batch you want to start: "))
     start_point = int(input("Point in the batch to start: "))
     if start_batch == 1 and start_point == 1:
