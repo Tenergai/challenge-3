@@ -81,6 +81,7 @@ def getModel():
         filename = '../Generation Prediction DNN/DNN_model.h5'
         # load the model from disk
         loaded_model = tf.keras.models.load_model(filename)
+    
     return loaded_model
 
 def fix_xtest(x_test, x_train, y_train):
