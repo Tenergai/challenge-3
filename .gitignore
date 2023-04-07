@@ -132,3 +132,4 @@ dmypy.json
 corpus/
 metadata.csv
 nlp_data.csv
+training_checkpoints/
