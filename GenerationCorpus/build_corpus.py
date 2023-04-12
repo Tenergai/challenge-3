@@ -72,15 +72,22 @@ def gen_explanation(solar_power_cat):
     if solar_power_cat == "very low":
         possible_explations = [
             ("solar radiation", "significant negative impact"),
+            ("daily rain", "significant negative impact"),
+            ("hourly precipitation", "significant negative impact")
         ]
     elif solar_power_cat == "low":
         possible_explations = [
             ("solar radiation", "negative impact"),
+            ("dewpoint", "negative impact"),
+            ("daily rain", "negative impact"),
+            ("humidity", "negative impact"),
             ("hourly precipitation", "significant negative impact")
         ]
     elif solar_power_cat == "medium":
         possible_explations = [
             ("hourly precipitation", "negative impact"),
+            ("humidity", "negative impact"),
+            ("daily rain", "negative impact"),
             ("temperature", "negative impact")
         ]
     elif solar_power_cat == "high":
@@ -110,8 +117,7 @@ def gen_explanation(solar_power_cat):
 
 def gen_text_formats():
     date, hour = gen_date()
-    # name = random.choice(["Pedro", "Luís", "Franciso", "Constantino", "Rafael", "Letícia"])
-    name = random.choice(["Tomás", "Ricardo", "Ana", "Carlos", "Ema", "Diana"])
+    name = random.choice(["Pedro", "Luís", "Franciso", "Constantino", "Rafael", "Letícia", "Tomás", "Ricardo", "Ana", "Carlos", "Ema", "Diana"])
     
     coef = random.choice(list(category.values()))
     func_rescale = lambda x: round(x/coef, 3)
@@ -275,7 +281,7 @@ def gen_reports_batch(batch, start_point, batch_size, df):
 
 def main():
     n_batches = 100
-    batch_size = 16
+    batch_size = 64
     start_batch = int(input("Batch you want to start: "))
     start_point = int(input("Point in the batch to start: "))
     if start_batch == 1 and start_point == 1:
