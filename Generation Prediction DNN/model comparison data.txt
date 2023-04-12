@@ -57,3 +57,61 @@ Standard Scaler:
 MSE:  0.12295647710561752
 MAE: 0.17541764676570892
 R2: 0.8762401584492724
+
+
+
+### Current model ###
+# create ANN model
+model = Sequential()
+ 
+# Defining the Input layer and FIRST hidden layer, both are same!
+model.add(Dense(units=5, input_dim=X_train.shape[1], kernel_initializer='normal', activation='relu'))
+ 
+# Defining the Second layer of the model
+# after the first layer we don't have to specify input_dim as keras configure it automatically
+model.add(Dense(units=10, kernel_initializer='normal', activation='tanh'))
+model.add(Dense(units=8, kernel_initializer='normal', activation='tanh'))
+# model.add(Dense(units=5, kernel_initializer='normal', activation='tanh'))
+
+ 
+# The output neuron is a single fully connected node 
+# Since we will be predicting a single number
+model.add(Dense(1, kernel_initializer='normal'))
+
+
+history=model.fit(
+    X_train, 
+    y_train ,
+    batch_size = 15, 
+    epochs = 100,     
+    verbose=1,
+    validation_split = 0.33)
+
+MSE:  0.11102812737226486
+MAE: 0.1621752679347992
+R2: 0.8882464704185786
+
+### Switched model above from 100 to 200 epochs ###
+history=model.fit(
+    X_train, 
+    y_train ,
+    batch_size = 15, 
+    epochs = 200,     
+    verbose=1,
+    validation_split = 0.33)
+
+MSE:  0.11346317082643509
+MAE: 0.16318564116954803
+R2: 0.8857955485253808
+
+Result: worse
+
+### Switched model above from 100 to 150 epochs ###
+MSE:  0.11042766273021698
+MAE: 0.18567189574241638
+R2: 0.8888507619824075
+Result: mais R2 mas mais MAE 
+### Switched model above from 100 to 130 epochs ###
+MSE:  0.10761170834302902
+MAE: 0.15816757082939148
+R2: 0.8916851839959781
