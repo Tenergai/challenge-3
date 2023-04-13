@@ -115,3 +115,6 @@ Result: mais R2 mas mais MAE
 MSE:  0.10761170834302902
 MAE: 0.15816757082939148
 R2: 0.8916851839959781
+Result : best so far
+
+### switched activation of hidden layers from tahn to relu
