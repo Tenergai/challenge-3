@@ -190,8 +190,8 @@ def getDictionaryDevices(devices, totalGeneration):
     return devices_
 
 
-devices=getDevices()
-prediction, all_contribution, mean_contribution, dev_fin = fixedXtest(devices)
+# devices=getDevices()
+# prediction, all_contribution, mean_contribution, dev_fin = fixedXtest(devices)
 # print('pre\n', prediction)
 # print('all_contributions\n', all_contribution)
 # print('mean_contribution\n', mean_contribution)
