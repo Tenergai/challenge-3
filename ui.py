@@ -2,11 +2,7 @@ import streamlit as sl
 import requests
 import pandas as pd
 import time
-
-sl.set_page_config(page_title="Tenergito",layout="wide")
-sl.header("""Tenergito""")
-
-url = 'http://192.168.1.1'
+from shap.shapModel import getContributions
 
 def fetch_forecast(url):
     return [0,0,0,0,0,0,50,100,350,800,1100,1500,2000,2300,2350,2123,1800,1304,754,300,213,0,0,0]
@@ -21,6 +17,13 @@ def fetch_report(url):
     data = response.json()
     return data['report']
 
+
+sl.set_page_config(page_title="Tenergito",layout="wide")
+sl.header("""Tenergito""")
+
+url = 'http://192.168.1.1'
+
+
 left, right = sl.columns(2)
 
 left.write("""
@@ -32,11 +35,18 @@ forecast = pd.DataFrame(forecast, columns = ['generation'])
 left.line_chart(forecast)
 
 
-devices = ["Washing Machine", "Fridge", "TV", "Heater"]
+devices = ["AC", "DishWasher", "WashingMachine", "Dryer", "WaterHeater" , "TV", "Microwave", "Kettle", "Lighting", "Refrigerator"]
 used_devices = right.multiselect('Devices to use:',devices)
 
+ordered_devices = []
+for i, device in enumerate(used_devices):
+    ordered_devices.append({"name": device, "priority": i+1})
+
 datetime = right.date_input('What time?')
-hour = right.slider('To what hour do you want advice?', 0, 23)
+hour = right.time_input('To what hour do you want advice?')
+sl.write()
+getContributions(ordered_devices, str(hour)[:-3])
+
 
 sl.write('### report')
 with sl.spinner(text='Generating report..'):

@@ -7,8 +7,8 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from deviceSpecification import getDevices
-from dailyInfo import getDailyInfo
+from shap.deviceSpecification import getDevices
+from shap.dailyInfo import getDailyInfo
 def getshapvalues(X_test):
     df_x = getDataframeColumns()
     model = getModel()
