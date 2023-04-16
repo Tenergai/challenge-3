@@ -2,7 +2,7 @@ import streamlit as sl
 import requests
 import pandas as pd
 import time
-from shap.shapModel import getContributions
+from shapModel.shapModel import getContributions
 
 def fetch_forecast(url):
     return [0,0,0,0,0,0,50,100,350,800,1100,1500,2000,2300,2350,2123,1800,1304,754,300,213,0,0,0]

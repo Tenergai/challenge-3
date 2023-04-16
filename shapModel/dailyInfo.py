@@ -19,19 +19,44 @@ def getDailyInfo(timeReq):
 
     if response.status_code == 200:
         data = response.json()
-        temperature = float(data['current']['temp'])
-        dewpoint = float(data['current']['dew_point'])
-        pressure = float(data['current']['pressure'])
-        wind_direction = float(data['current']['wind_deg'])
-        wind_speed = float(data['current']['wind_speed']* 1.60934)#miles/hour-KM/H 
+        try:
+            temperature = float(data['current']['temp'])
+        except:
+            temperature=0.0
+
+        try:
+            dewpoint = float(data['current']['dew_point'])
+        except:
+            dewpoint=0.0
+
+        try:
+            pressure = float(data['current']['pressure'])
+        except:
+            pressure=0.0
+        
+        try:
+            wind_direction = float(data['current']['wind_deg'])
+        except:
+            wind_direction=0.0
+
+        try:
+            wind_speed = float(data['current']['wind_speed']* 1.60934)#miles/hour-KM/H 
+        except:
+            wind_speed=0.0
+
         try:
             wind_gust = float(data['current']['wind_gust']* 3.6)#metre/sec-KM/H 
         except:
             len_=len(data['hourly'])
             for i in range(0, len_):
-                wind_gust=float(data['hourly'][len_-i]['wind_gust']* 3.6)
+                try:
+                    wind_gust=float(data['hourly'][len_-i]['wind_gust']* 3.6)
+                except:
+                    wind_gust=None
                 if wind_gust is not None:
                     break
+        if wind_gust is None:
+            wind_gust=0.0   
         humidity = float(data['current']['humidity'])
         try:
             hourly_precip = float(data['hourly'][0]['rain']['1h'])
@@ -44,7 +69,7 @@ def getDailyInfo(timeReq):
         try:
             solar_radiation = solar_radiation = data['current']['uvi']* 40 
             solar_radiation=float(solar_radiation)
-        except Exception as e:
+        except:
             solar_radiation=0.0
         info=[[float_hour, float_minut,temperature, dewpoint, pressure, wind_direction,wind_speed,wind_gust,humidity,hourly_precip,daily_rain,solar_radiation]]
         info=np.array(info)
