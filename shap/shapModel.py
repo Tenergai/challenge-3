@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from deviceSpecification import getDevices
-
+from dailyInfo import getDailyInfo
 def getshapvalues(X_test):
     df_x = getDataframeColumns()
     model = getModel()
@@ -128,9 +128,8 @@ def fixedXtest(devices):
     listDevices=getDictionaryDevices(devices,prediction)
     return prediction, all_contribution, mean_contribution, listDevices
 
-def getContributions(devices,data):
-    if not isinstance(data, np.array):
-        data = np.array(data)
+def getContributions(devices, timeReq):
+    data=getDailyInfo(timeReq)
     #ler o dataset
     #x_train sample do df => guardado num file
     #y_train sample do df => guardado num file 
@@ -165,21 +164,23 @@ def saveTrains():
 def getDictionaryDevices(devices, totalGeneration):
     sorted_devices = sorted(devices, key=lambda x: x['priority'], reverse=True)
     devices_=[]
+    all_devices=getDevices()
     for t in np.nditer(totalGeneration):
         max=0
         can_turn_on=[]
         maybe_can_turn_on=[]
         cannot_turn_on=[]
         for d in sorted_devices:
-            c=d.get('consumption')
-            if (c+max)<=t:
-                max+=c
-                can_turn_on.append(d.get('name'))
-            elif (c+max)<=t+0.5:
-                max+=c
-                maybe_can_turn_on.append(d.get('name'))
+            name_=d.get('name')
+            consumption_ = [device['consumption'] for device in all_devices if device['name'] == name_][0]
+            if (consumption_+max)<=t:
+                max+=consumption_
+                can_turn_on.append(name_)
+            elif (consumption_+max)<=t+0.5:
+                max+=consumption_
+                maybe_can_turn_on.append(name_)
             else:
-                cannot_turn_on.append(d.get('name'))
+                cannot_turn_on.append(name_)
         devices_final={
             "use":can_turn_on, 
             "uncertain":maybe_can_turn_on,
