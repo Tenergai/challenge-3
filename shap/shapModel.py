@@ -7,7 +7,7 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-
+from deviceSpecification import getDevices
 
 def getshapvalues(X_test):
     df_x = getDataframeColumns()
@@ -103,12 +103,13 @@ def execute(x_test,PredictorScalerFit):
     return predictions, all_contrib, mean_contrib
 
 
-def testingExecute():
+def testingExecute(devices):
     x_test,TargetVarScalerFit = getRandomX_test()
     prediction, all_contribution, mean_contribution = execute(x_test,TargetVarScalerFit)
-    return prediction, all_contribution, mean_contribution
+    listDevices=getDictionaryDevices(devices,prediction)
+    return prediction, all_contribution, mean_contribution, listDevices
 
-def fixedXtest():
+def fixedXtest(devices):
     # predict ao modelo
     x_test = [[0., 15., 11., 8.,
                1021., 128.33333333, 8.66666667, 17.,
@@ -124,9 +125,10 @@ def fixedXtest():
     y_train = np.load('y_train.npy')
     x_test,TargetVarScalerFit = fix_xtest(x_test, x_train, y_train)
     prediction, all_contribution, mean_contribution = execute(x_test,TargetVarScalerFit)
-    return prediction, all_contribution, mean_contribution
+    listDevices=getDictionaryDevices(devices,prediction)
+    return prediction, all_contribution, mean_contribution, listDevices
 
-def getContributions(data):
+def getContributions(devices,data):
     if not isinstance(data, np.array):
         data = np.array(data)
     #ler o dataset
@@ -137,12 +139,8 @@ def getContributions(data):
     y_train = np.load('y_train.npy')
     x_test,TargetVarScalerFit = fix_xtest(data, x_train, y_train)
     prediction, all_contribution, mean_contribution = execute(x_test,TargetVarScalerFit)
-    return prediction, all_contribution, mean_contribution
-
-# prediction, all_contribution, mean_contribution = testingExecute()
-# print('pre\n', prediction)
-# print('all_contributions\n', all_contribution)
-# print('mean_contribution\n', mean_contribution)
+    listDevices=getDictionaryDevices(devices,prediction)
+    return prediction, all_contribution, mean_contribution,listDevices
 
 def saveTrains():
     df = readDataframe()
@@ -163,3 +161,39 @@ def saveTrains():
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
     np.save('x_train.npy', X_train)
     np.save('y_train.npy', y_train)
+
+def getDictionaryDevices(devices, totalGeneration):
+    sorted_devices = sorted(devices, key=lambda x: x['priority'], reverse=True)
+    devices_=[]
+    for t in np.nditer(totalGeneration):
+        max=0
+        can_turn_on=[]
+        maybe_can_turn_on=[]
+        cannot_turn_on=[]
+        for d in sorted_devices:
+            c=d.get('consumption')
+            if (c+max)<=t:
+                max+=c
+                can_turn_on.append(d.get('name'))
+            elif (c+max)<=t+0.5:
+                max+=c
+                maybe_can_turn_on.append(d.get('name'))
+            else:
+                cannot_turn_on.append(d.get('name'))
+        devices_final={
+            "use":can_turn_on, 
+            "uncertain":maybe_can_turn_on,
+            "no_use":cannot_turn_on
+
+        }
+        devices_.append(devices_final)
+    return devices_
+
+
+# devices=getDevices()
+# prediction, all_contribution, mean_contribution, dev_fin = fixedXtest(devices)
+# print('pre\n', prediction)
+# print('all_contributions\n', all_contribution)
+# print('mean_contribution\n', mean_contribution)
+# print('devices',dev_fin)
+
