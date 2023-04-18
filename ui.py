@@ -3,57 +3,68 @@ import requests
 import pandas as pd
 import time
 import random
-#from shapModel.shapModel import getContributions
+from shapModel.shapModel import getContributions
+import shapModel.nlp_serialized as nlp
 
-def fetch_forecast(url):
-    return [0,0,0,0,0,0,50,100,350,800,1100,1500,2000,2300,2350,2123,1800,1304,754,300,213,0,0,0]
+devices = ["AC", "DishWasher", "WashingMachine", "WaterHeater", "Heater", "Dryer", "TV", "Microwave", "Kettle", "Lighting", "Refrigerator"]
+months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
 
-def fetch_report(prediction, all_contribution, mean_contribution,listDevices):
-    time.sleep(5)
-    return 'dear carlos , we hope this message finds you well . as your solar power provider , we wanted to provide you with a report on the predicted solar power generation from your solar panels on october 15th , 2024 at 1800 . based on our analysis , we predict that the solar power generated will be medium , with a total of 5 . 0 kilo watts . this is due to the negative impact of the solar radiation and hourly precipitation predicted value . based on this prediction , we recommend that you avoid using your appliances heater , as it might exceed the generated power . however , we advise against using your washing machine and dishwasher as they will definitely exceed the generated power . we hope this information is helpful and please do not hesitate to contact us if you have any further questions or concerns . best regards , tenergito'
+def fetch_forecast():
+    return pd.DataFrame([0,0,0,0,0,0,50,100,350,800,1100,1500,2000,2300,2350,2123,1800,1304,754,300,213,0,0,0], columns = ['generation'])
+
+def order_devices(used_devices):
+    ordered_devices = []
+    for i, device in enumerate(used_devices):
+        ordered_devices.append({"name": device, "priority": i+1})
+    return ordered_devices
+
+def fetch_report(datetime, hour, name, prediction, all_contribution, mean_contribution,ordered_devices):
+    priorities = ''
+    for device in devices[:5]:
+        added = False
+        for ordered_device in ordered_devices:
+            if ordered_device['name'] == device:
+                priorities += ' ' + str(ordered_device['priority'])+'.0'
+                added = True
+        if not added:
+            priorities += ' 0.0'
+    #solar_power_cat,solar_power_num,feat1,feat2,contri1,contri2,air conditioner,washing machine,dishwasher,water heater,heater
+    text = str(datetime.day) + ' ' + months[datetime.month-1] + ' ' + str(datetime.year) + ' ' + str(hour.hour) + ' ' + name
+    text = text + ' ' + 'medium 8.0 hourly precipitation temperature negative impact negative impact' + ' ' +priorities
+    #sl.write(text)
+    loaded_model = nlp.load_model()
+    return nlp.translate(loaded_model, [text])
 
 
 sl.set_page_config(page_title="Tenergito",layout="wide")
 sl.header("""Tenergito""")
-
-url = 'http://192.168.1.1'
-
-
 left, right = sl.columns(2)
 
 left.write("""
 ### generation forecast
 """)
+left.line_chart(fetch_forecast())
 
-forecast = fetch_forecast(url)
-forecast = pd.DataFrame(forecast, columns = ['generation'])
-left.line_chart(forecast)
 
 name = right.text_input("Name:")
-
-devices = ["AC", "DishWasher", "WashingMachine", "Dryer", "WaterHeater" , "TV", "Microwave", "Kettle", "Lighting", "Refrigerator"]
 used_devices = right.multiselect('Devices to use (first has the most priority and the last the least priority):',devices)
-
-ordered_devices = []
-for i, device in enumerate(used_devices):
-    ordered_devices.append({"name": device, "priority": i+1})
-
 datetime = right.date_input('What time?')
 hour = right.time_input('To what hour do you want advice?')
 
+
 if right.button("Generate Report"):
-    #prediction, all_contribution, mean_contribution,listDevices = getContributions(ordered_devices, str(hour)[:-3])
-    #sl.write(prediction, all_contribution, mean_contribution,listDevices)
+    ordered_devices = order_devices(used_devices)
+    prediction, all_contribution, mean_contribution,listDevices = getContributions(ordered_devices, str(hour)[:-3])
 
     sl.write('### report')
     with sl.spinner(text='Generating report..'):
-        time.sleep(5)
+        report = fetch_report(datetime, hour, name, prediction, all_contribution, mean_contribution,ordered_devices)
     text_element = sl.empty()
-    report = 'dear carlos , we hope this message finds you well . as your solar power provider , we wanted to provide you with a report on the predicted solar power generation from your solar panels on october 15th , 2024 at 1800 . based on our analysis , we predict that the solar power generated will be medium , with a total of 5 . 0 kilo watts . this is due to the negative impact of the solar radiation and hourly precipitation predicted value . based on this prediction , we recommend that you avoid using your appliances heater , as it might exceed the generated power . however , we advise against using your washing machine and dishwasher as they will definitely exceed the generated power . we hope this information is helpful and please do not hesitate to contact us if you have any further questions or concerns . best regards , tenergito'
+    
     wr = ''
     for char in report:
         wr = wr + char
-        time.sleep(random.randrange(0,10)/100)
+        time.sleep(random.randrange(0,5)/100)
         text_element.write(wr)
 
         
