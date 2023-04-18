@@ -10,7 +10,12 @@ devices = ["AC", "DishWasher", "WashingMachine", "WaterHeater", "Heater", "Dryer
 months = ["January","February","March","April","May","June","July","August","September","October","November","December"]
 
 def fetch_forecast():
-    return pd.DataFrame([0,0,0,0,0,0,50,100,350,800,1100,1500,2000,2300,2350,2123,1800,1304,754,300,213,0,0,0], columns = ['generation'])
+    hours = ['00','01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23']
+    result = []
+    for hour in hours:
+        prediction, all_contribution, mean_contribution,listDevices = getContributions(ordered_devices, hour+':00')
+        result.append([prediction, all_contribution, mean_contribution,listDevices])
+    return result
 
 def order_devices(used_devices):
     ordered_devices = []
@@ -32,8 +37,9 @@ def fetch_report(datetime, hour, name, prediction, all_contribution, mean_contri
     text = str(datetime.day) + ' ' + months[datetime.month-1] + ' ' + str(datetime.year) + ' ' + str(hour.hour) + ' ' + name
     text = text + ' ' + 'medium 8.0 hourly precipitation temperature negative impact negative impact' + ' ' +priorities
     #sl.write(text)
-    loaded_model = nlp.load_model()
-    return nlp.translate(loaded_model, [text])
+    return 'lalalla'
+    #loaded_model = nlp.load_model()
+    #return nlp.translate(loaded_model, [text])
 
 
 sl.set_page_config(page_title="Tenergito",layout="wide")
@@ -43,8 +49,7 @@ left, right = sl.columns(2)
 left.write("""
 ### generation forecast
 """)
-left.line_chart(fetch_forecast())
-
+left.write(fetch_forecast())
 
 name = right.text_input("Name:")
 used_devices = right.multiselect('Devices to use (first has the most priority and the last the least priority):',devices)
@@ -55,7 +60,7 @@ hour = right.time_input('To what hour do you want advice?')
 if right.button("Generate Report"):
     ordered_devices = order_devices(used_devices)
     prediction, all_contribution, mean_contribution,listDevices = getContributions(ordered_devices, str(hour)[:-3])
-
+    sl.write(prediction, all_contribution, mean_contribution,listDevices)
     sl.write('### report')
     with sl.spinner(text='Generating report..'):
         report = fetch_report(datetime, hour, name, prediction, all_contribution, mean_contribution,ordered_devices)
@@ -65,9 +70,7 @@ if right.button("Generate Report"):
     for char in report:
         wr = wr + char
         time.sleep(random.randrange(0,5)/100)
-        text_element.write(wr)
-
-        
+        text_element.write(wr)        
 else:
     sl.write('### report')
     sl.write('no report to be generated')
