@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 import time
 import random
-from shapModel.shapModel import getContributions
+from shapModel.shapModel import getContributions, getGraph, getSerialized
 import shapModel.nlp_serialized as nlp
 
 devices = ["AC", "DishWasher", "WashingMachine", "WaterHeater", "Heater", "Dryer", "TV", "Microwave", "Kettle", "Lighting", "Refrigerator"]
@@ -12,16 +12,17 @@ months = ["January","February","March","April","May","June","July","August","Sep
 def fetch_forecast():
     hours = ['00','01','02','03','04','05','06','07','08','09','10','11','12','13','14','15','16','17','18','19','20','21','22','23']
     result = []
+    PredictorScalerFit, TargetVarScalerFit, model = getSerialized()
     for hour in hours:
-        prediction, all_contribution, mean_contribution,listDevices = getContributions(ordered_devices, hour+':00')
-        result.append([prediction, all_contribution, mean_contribution,listDevices])
-    return result
+        prediction = getGraph(hour+':00',PredictorScalerFit,TargetVarScalerFit, model)
+        result.append(prediction[0][0])
+    return pd.DataFrame(result, columns=['generation'])
 
 def order_devices(used_devices):
-    ordered_devices = []
+    ord_devices = []
     for i, device in enumerate(used_devices):
-        ordered_devices.append({"name": device, "priority": i+1})
-    return ordered_devices
+        ord_devices.append({"name": device, "priority": i+1})
+    return ord_devices
 
 def fetch_report(datetime, hour, name, prediction, all_contribution, mean_contribution,ordered_devices):
     priorities = ''
@@ -37,9 +38,8 @@ def fetch_report(datetime, hour, name, prediction, all_contribution, mean_contri
     text = str(datetime.day) + ' ' + months[datetime.month-1] + ' ' + str(datetime.year) + ' ' + str(hour.hour) + ' ' + name
     text = text + ' ' + 'medium 8.0 hourly precipitation temperature negative impact negative impact' + ' ' +priorities
     #sl.write(text)
-    return 'lalalla'
-    #loaded_model = nlp.load_model()
-    #return nlp.translate(loaded_model, [text])
+    loaded_model = nlp.load_model()
+    return nlp.translate(loaded_model, [text])
 
 
 sl.set_page_config(page_title="Tenergito",layout="wide")
@@ -49,23 +49,23 @@ left, right = sl.columns(2)
 left.write("""
 ### generation forecast
 """)
-left.write(fetch_forecast())
+
+line = left.line_chart(fetch_forecast())
 
 name = right.text_input("Name:")
 used_devices = right.multiselect('Devices to use (first has the most priority and the last the least priority):',devices)
 datetime = right.date_input('What time?')
-hour = right.time_input('To what hour do you want advice?')
+hour_input = right.time_input('To what hour do you want advice?')
 
 
 if right.button("Generate Report"):
     ordered_devices = order_devices(used_devices)
-    prediction, all_contribution, mean_contribution,listDevices = getContributions(ordered_devices, str(hour)[:-3])
-    sl.write(prediction, all_contribution, mean_contribution,listDevices)
+    prediction, all_contribution, mean_contribution,listDevices = getContributions(ordered_devices, str(hour_input)[:-3])
     sl.write('### report')
     with sl.spinner(text='Generating report..'):
-        report = fetch_report(datetime, hour, name, prediction, all_contribution, mean_contribution,ordered_devices)
+        report = fetch_report(datetime, hour_input, name, prediction, all_contribution, mean_contribution,ordered_devices)
     text_element = sl.empty()
-    
+
     wr = ''
     for char in report:
         wr = wr + char

@@ -1,4 +1,5 @@
 import sklearn
+import pickle
 import shap
 import joblib
 import numpy as np
@@ -75,14 +76,9 @@ def getRandomX_test():
 
 
 def getModel():
-    try:
-        filename = 'Generation Prediction DNN/DNN_model.h5'
-        # load the model from disk
-        loaded_model = tf.keras.models.load_model(filename)
-    except:
-        filename = '../Generation Prediction DNN/DNN_model.h5'
-        # load the model from disk
-        loaded_model = tf.keras.models.load_model(filename)
+    filename = 'Generation Prediction DNN/DNN_finalized_model'
+    # load the model from disk
+    loaded_model = tf.keras.models.load_model(filename)
     
     return loaded_model
 
@@ -97,10 +93,10 @@ def fix_xtest(x_test, x_train, y_train):
     TargetVarScalerFit = TargetVarScaler.fit(y_train)
     return X,TargetVarScalerFit
 
-def execute(x_test,PredictorScalerFit):
+def execute(x_test,TargetVarScalerFit):
     model = getModel()
     predictions = model.predict(x_test)
-    predictions=PredictorScalerFit.inverse_transform(predictions)
+    predictions = TargetVarScalerFit.inverse_transform(predictions)
     all_contrib, mean_contrib = getshapvalues(x_test)
     return predictions, all_contrib, mean_contrib
 
@@ -130,15 +126,32 @@ def fixedXtest(devices):
     listDevices=getDictionaryDevices(devices,prediction)
     return prediction, all_contribution, mean_contribution, listDevices
 
+def getSerialized():
+    with open('PredictorScalerFit.pkl', 'rb') as f:
+        PredictorScalerFit = pickle.load(f)
+    with open('TargetVarScalerFit.pkl', 'rb') as f:
+        TargetVarScalerFit = pickle.load(f)
+    model = tf.keras.models.load_model('Generation Prediction DNN/DNN_finalized_model')
+    return PredictorScalerFit, TargetVarScalerFit, model
+
+def getGraph(timeReq,PredictorScalerFit,TargetVarScalerFit, model):
+    data=getDailyInfo(timeReq)
+    x_test = PredictorScalerFit.transform(data)
+    predictions = model.predict(x_test)
+    predictions = TargetVarScalerFit.inverse_transform(predictions)
+    return predictions
+
 def getContributions(devices, timeReq):
     data=getDailyInfo(timeReq)
     #ler o dataset
     #x_train sample do df => guardado num file
     #y_train sample do df => guardado num file 
     #fit e tranform a essas variáveis
-    x_train = np.load('x_train.npy')
-    y_train = np.load('y_train.npy')
-    x_test,TargetVarScalerFit = fix_xtest(data, x_train, y_train)
+    with open('PredictorScalerFit.pkl', 'rb') as f:
+        PredictorScalerFit = pickle.load(f)
+    with open('TargetVarScalerFit.pkl', 'rb') as f:
+        TargetVarScalerFit = pickle.load(f)
+    x_test = PredictorScalerFit.transform(data)
     prediction, all_contribution, mean_contribution = execute(x_test,TargetVarScalerFit)
     listDevices=getDictionaryDevices(devices,prediction)
     return prediction, all_contribution, mean_contribution,listDevices
@@ -193,10 +206,9 @@ def getDictionaryDevices(devices, totalGeneration):
     return devices_
 
 
-# devices=getDevices()
-# prediction, all_contribution, mean_contribution, dev_fin = fixedXtest(devices)
-# print('pre\n', prediction)
-# print('all_contributions\n', all_contribution)
-# print('mean_contribution\n', mean_contribution)
-# print('devices',dev_fin)
-
+#devices=getDevices()
+#prediction, all_contribution, mean_contribution, dev_fin = testingExecute(devices)
+#print('pre\n', prediction)
+#print('all_contributions\n', all_contribution)
+#print('mean_contribution\n', mean_contribution)
+#print('devices',dev_fin)
